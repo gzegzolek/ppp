@@ -5,7 +5,7 @@
 	Description:
 	Stores the vehicle in the 'Garage'
 */
-private["_vehicle","_impound","_vInfo","_vInfo","_plate","_uid","_query","_sql","_unit","_trunk","_vehItems","_vehMags","_vehWeapons","_vehBackpacks","_cargo","_saveItems","_storetext","_resourceItems","_fuel","_damage","_itemList","_totalweight","_weight","_thread"];
+private["_vehicle","_impound","_vInfo","_vInfo","_plate","_uid","_query","_sql","_unit","_trunk","_vehItems","_vehMags","_vehWeapons","_vehBackpacks","_cargo","_saveItems","_storetext","_resourceItems","_fuel","_damage","_itemList","_totalweight","_weight"];
 _vehicle = [_this,0,ObjNull,[ObjNull]] call BIS_fnc_param;
 _impound = [_this,1,false,[true]] call BIS_fnc_param;
 _unit = [_this,2,ObjNull,[ObjNull]] call BIS_fnc_param;
@@ -71,57 +71,21 @@ if(_uid != getPlayerUID _unit) exitWith {
 };
 
 // sort out whitelisted items!
-_trunk = _vehicle getVariable ["Trunk", [[], 0]];
-_itemList = _trunk select 0;
-_totalweight = 0;
-_items = [];
-if (LIFE_SETTINGS(getNumber,"save_vehicle_virtualItems") isEqualTo 1) then {
-    if (LIFE_SETTINGS(getNumber,"save_vehicle_illegal") isEqualTo 1) then {
-        private["_isIllegal", "_blacklist"];
-        _blacklist = false;
-        _profileQuery = format["SELECT name FROM players WHERE playerid='%1'", _uid];
-        _profileName = [_profileQuery, 2] call DB_fnc_asyncCall;
-        _profileName = _profileName select 0;
-
-        {
-            _isIllegal = M_CONFIG(getNumber,"VirtualItems",(_x select 0),"illegal");
-
-            _isIllegal = if (_isIllegal isEqualTo 1) then { true } else { false };
-
-            if (((_x select 0) in _resourceItems) || (_isIllegal)) then {
-                _items pushBack[(_x select 0),(_x select 1)];
-                _weight = (ITEM_WEIGHT(_x select 0)) * (_x select 1);
-                _totalweight = _weight + _totalweight;
-            };
-            if (_isIllegal) then {
-                _blacklist = true;
-            };
-
-        }
-        foreach _itemList;
-
-        if (_blacklist) then {
-            [_uid, _profileName, "481"] remoteExecCall["life_fnc_wantedAdd", RSERV];
-            _query = format["UPDATE vehicles SET blacklist='1' WHERE pid='%1' AND plate='%2'", _uid, _plate];
-            _thread = [_query, 1] call DB_fnc_asyncCall;
-        };
-
-    }
-    else {
-        {
-            if ((_x select 0) in _resourceItems) then {
-                _items pushBack[(_x select 0),(_x select 1)];
-                _weight = (ITEM_WEIGHT(_x select 0)) * (_x select 1);
-                _totalweight = _weight + _totalweight;
-            };
-        }
-        forEach _itemList;
-    };
-
-    _trunk = [_items, _totalweight];
-}
-else {
-    _trunk = [[], 0];
+if(EQUAL(LIFE_SETTINGS(getNumber,"save_veh_virtualItems"),1)) then {
+	_trunk = _vehicle getVariable["Trunk",[[],0]];
+	_itemList = _trunk select 0;
+	_totalweight = 0;
+	_items = [];
+		{
+			if((_x select 0) in _resourceItems) then {
+				_items pushback [(_x select 0),(_x select 1)];
+				_weight = (ITEM_WEIGHT(_x select 0)) * (_x select 1);
+				_totalweight = _weight + _totalweight;
+			};
+		}foreach _itemList;
+	_trunk = [_items,_totalweight];
+	} else { 
+	_trunk = [[],0];
 };
 
 if(EQUAL(LIFE_SETTINGS(getNumber,"save_veh_gear"),1)) then {
