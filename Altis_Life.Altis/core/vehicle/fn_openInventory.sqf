@@ -2,7 +2,6 @@
 /*
 	File: fn_openInventory.sqf
 	Author: Bryan "Tonic" Boardwine
-
 	Description:
 	Starts the initialization of vehicle virtual inventory menu.
 */
@@ -43,20 +42,20 @@ _vehicle spawn {
 	};
 };
 
-if (LIFE_SETTINGS(getNumber,"save_vehicle_virtualItems") isEqualTo 1) then {
-    _vehicle spawn {
-        waitUntil {isNull (findDisplay 3500)};
-        _this setVariable ["trunk_in_use",false,true];
-        if ((_this isKindOf "Car") || (_this isKindOf "Air") || (_this isKindOf "Ship")) then {
-            [] call SOCK_fnc_updateRequest;
+if(EQUAL(LIFE_SETTINGS(getNumber,"save_vehicle_virtualItems"),1)) then {
+	_vehicle spawn {
+		waitUntil {isNull (findDisplay 3500)};
+		_this setVariable["trunk_in_use",false,true];
+		if((_this isKindOf "Car") || (_this isKindOf "Air") || (_this isKindOf "Ship")) then {
+			[] call SOCK_fnc_updateRequest;
 
-            if (life_HC_isActive) then {
-                [_this,2] remoteExecCall ["HC_fnc_vehicleUpdate",HC_Life];
-            } else {
-                [_this,2] remoteExecCall ["TON_fnc_vehicleUpdate",2];
-            };
-        };
-    };
+			if(life_HC_isActive) then {
+				[_this,2] remoteExecCall ["HC_fnc_vehicleUpdate",HC_Life];
+			} else {
+				[_this,2] remoteExecCall ["TON_fnc_vehicleUpdate",2];
+			};
+		};
+	};
 };
 
 [] call life_fnc_playerSkins;
