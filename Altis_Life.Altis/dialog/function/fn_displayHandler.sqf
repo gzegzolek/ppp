@@ -14,6 +14,6 @@ _ctrlKey = _this select 3;
 _alt = _this select 4;
 
 //Esc Key Handler
-if(_code == 1) then {_handled = true;};
+if(_code isEqualTo 1) then {_handled = true;};
 
 _handled;

@@ -31,7 +31,7 @@ class life_moves_menu {
 		class Title : Life_RscTitle {
 			colorBackground[] = {0, 0, 0, 0};
 			idc = 2901;
-			text = "";
+			text = "Moves Menu";
 			x = 0.1;
 			y = 0.2;
 			w = 0.6;
@@ -60,7 +60,7 @@ class life_moves_menu {
 		
 		class performMove : Life_RscButtonMenu {
 			idc = -1;
-			text = "Ćwicz";
+			text = "Move";
 			onButtonClick = "_move = lbData[2902,lbCurSel (2902)];_move = call compile format[""%1"", _move]; player playMove _move; closeDialog 0;";
 			x = 0.1 + (6.25 / 40) + (1 / 250 / (safezoneW / safezoneH));
 			y = 0.88 - (1 / 25);

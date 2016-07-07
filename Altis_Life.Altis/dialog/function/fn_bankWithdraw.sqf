@@ -1,18 +1,30 @@
+#include "..\..\script_macros.hpp"
 /*
-	COPY PASTE TIME
-*/
-private["_val"];
-_val = parseNumber(ctrlText 2702);
-if(_val > 999999) exitWith {hint localize "STR_ATM_WithdrawMax";};
-if(_val < 0) exitwith {};
-if(!([str(_val)] call life_fnc_isnumeric)) exitWith {hint localize "STR_ATM_notnumeric"};
-if(_val > life_atmcash) exitWith {hint localize "STR_ATM_NotEnoughFunds"};
-if(_val < 100 && life_atmcash > 999999) exitWith {hint localize "STR_ATM_WithdrawMin"}; //Temp fix for something.
+	File: fn_bankWithdraw.sqf
+	Author: Bryan "Tonic" Boardwine
 
-life_cash = life_cash + _val;
-life_atmcash = life_atmcash - _val;
-hint format [localize "STR_ATM_WithdrawSuccess",[_val] call life_fnc_numberText];
+	Description:
+	Withdraws money from the players account
+*/
+private["_value"];
+_value = parseNumber(ctrlText 2702);
+if(_value > 999999) exitWith {hint localize "STR_ATM_WithdrawMax";};
+if(_value < 0) exitWith {};
+if(!([str(_value)] call life_fnc_isnumeric)) exitWith {hint localize "STR_ATM_notnumeric"};
+if(_value > TTPBANK) exitWith {hint localize "STR_ATM_NotEnoughFunds"};
+if(_value < 100 && TTPBANK > 20000000) exitWith {hint localize "STR_ATM_WithdrawMin"}; //Temp fix for something.
+
+ADD(CASH,_value);
+SUB(TTPBANK,_value);
+hint format [localize "STR_ATM_WithdrawSuccess",[_value] call life_fnc_numberText];
 [] call life_fnc_atmMenu;
 [6] call SOCK_fnc_updatePartial;
 
-[[format ["1|%1 wyciągnął %2$ z BANKU. %1 ma teraz %3$ w BANKU",player getVariable["realname",name player],[_val] call life_fnc_numberText,[life_atmcash] call life_fnc_numberText]],"Arma3Log",false] call life_fnc_MP;
+if(EQUAL(LIFE_SETTINGS(getNumber,"player_moneyLog"),1)) then {
+	if(EQUAL(LIFE_SETTINGS(getNumber,"battlEye_friendlyLogging"),1)) then {
+		money_log = format ["withdrew %1 from their bank. Bank Balance: %2  On Hand Balance: %3",_value,[TTPBANK] call life_fnc_numberText,[CASH] call life_fnc_numberText];
+	} else {
+		money_log = format ["%1 - %2 withdrew %3 from their bank. Bank Balance: %4  On Hand Balance: %5",profileName,(getPlayerUID player),_value,[TTPBANK] call life_fnc_numberText,[CASH] call life_fnc_numberText];
+	};
+	publicVariableServer "money_log";
+};

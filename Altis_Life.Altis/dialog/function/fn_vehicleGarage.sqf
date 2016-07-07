@@ -1,4 +1,6 @@
+#include "..\..\script_macros.hpp"
 /*
+	File: fn_vehicleGarage.sqf
 	Author: Bryan "Tonic" Boardwine
 	
 	Description:
@@ -10,7 +12,13 @@ _spawnPos = [_this,0,ObjNull,[ObjNull]] call BIS_fnc_param;
 
 life_garage_sp = [(_spawnPos modelToWorld [-11.5,0,0]),(getDir _spawnPos)-90];
 life_garage_type = _type;
-[[getPlayerUID player,playerSide,_type,player],"TON_fnc_getVehicles",false,false] spawn life_fnc_MP;
+
+if(life_HC_isActive) then {
+	[getPlayerUID player,playerSide,_type,player] remoteExec ["HC_fnc_getVehicles",HC_Life];
+} else {
+	[getPlayerUID player,playerSide,_type,player] remoteExec ["TON_fnc_getVehicles",RSERV];
+};
+
 createDialog "Life_impound_menu";
 disableSerialization;
 ctrlSetText[2802,(localize "STR_ANOTF_QueryGarage")];

@@ -1,3 +1,9 @@
+/*
+	File: craft.hpp
+	Description: Crafting System
+	Created by EdgeKiller
+    Coder: EdgeKiller
+*/
 class Life_craft {
 	idd = 666;
 	name= "life_craft";

@@ -1,95 +1,81 @@
+#include "..\..\script_macros.hpp"
 /*
 	File: fn_spawnPointCfg.sqf
 	Author: Bryan "Tonic" Boardwine
-	
+
 	Description:
 	Master configuration for available spawn points depending on the units side.
-	
+
 	Return:
 	[Spawn Marker,Spawn Name,Image Path]
 */
-private["_side","_return"];
-_side = [_this,0,civilian,[civilian]] call BIS_fnc_param;
+private["_side","_return","_spawnCfg","_curConfig","_name","_licenses","_level","_levelName","_levelValue","_levelType","_tempConfig","_flag"];
+_side = param [0,civilian,[civilian]];
 
-//Spawn Marker, Spawn Name, PathToImage
-switch (_side) do
-{
-	case west:
-	{
-		if(license_cop_sek && playerSide == west) then {
-			_return = [
-				["cop_spawn_1","Kavala HQ","\a3\ui_f\data\map\MapControl\watertower_ca.paa"],
-				["cop_spawn_2","Pyrgos HQ","\a3\ui_f\data\map\MapControl\fuelstation_ca.paa"],
-				["cop_spawn_3","Athira HQ","\a3\ui_f\data\map\GroupIcons\badge_rotate_0_gs.paa"],
-				["cop_spawn_5","Sofia HQ","\a3\ui_f\data\map\GroupIcons\badge_rotate_0_gs.paa"],
-				["cop_jail_spawn","Więzienie","\a3\ui_f\data\map\GroupIcons\badge_rotate_0_gs.paa"],
-				["cop_spawn_4","AT","\a3\ui_f\data\map\Markers\NATO\b_air.paa"]
-			];
+switch (_side) do {
+    case west: {_side = "Cop"};
+    case independent: {_side = "Medic"};
+    default {_side = "Civilian"};
+};
+
+_return = [];
+
+_spawnCfg = missionConfigFile >> "CfgSpawnPoints" >> _side;
+
+for "_i" from 0 to count(_spawnCfg)-1 do {
+    _flag = true;
+    _tempConfig = [];
+		_curConfig = (_spawnCfg select _i);
+    _licenses = getArray(_curConfig >> "licenses");
+    _level = getArray(_curConfig >> "level");
+		_levelName = SEL(_level,0);
+		_levelType = SEL(_level,1);
+		_levelValue = SEL(_level,2);
+
+    {
+      if(!(EQUAL(SEL(_x,0),""))) then {
+        _licenseName = SEL(_x,0);
+        _licenseType = SEL(_x,1);
+        if(_licenseType isEqualTo 0) then {
+          if(LICENSE_VALUE(_licenseName,(M_CONFIG(getText,"Licenses",_licenseName,"side")))) exitWith {_flag = false};
+        } else {
+          if(!(LICENSE_VALUE(_licenseName,(M_CONFIG(getText,"Licenses",_licenseName,"side"))))) exitWith {_flag = false};
+        };
+      };
+    } foreach _licenses;
+
+    if(_flag) then {
+    	if(!(EQUAL(_levelValue,-1))) then {
+				_level = GVAR_MNS _levelName;
+				if(_level isEqualType {}) then {_level = FETCH_CONST(_level);};
+				_flag = switch(_levelType) do {
+					case "SCALAR": {_level >= _levelValue};
+					case "BOOL": {_level};
+					case "EQUAL": {EQUAL(_level,_levelValue)};
+					case "INVERSE": {_level <= _levelValue};
+					default {false};
+				};
+			};
+    };
+
+		if(_flag) then {
+			_tempConfig pushBack getText(_curConfig >> "spawnMarker");
+      _tempConfig pushBack getText(_curConfig >> "displayName");
+      _tempConfig pushBack getText(_curConfig >> "icon");
+      _return pushBack _tempConfig;
 		};
-		
-		if(!license_cop_sek && playerSide == west) then {
-		_return = [
-				["cop_spawn_1","Kavala HQ","\a3\ui_f\data\map\MapControl\watertower_ca.paa"],
-				["cop_spawn_2","Pyrgos HQ","\a3\ui_f\data\map\MapControl\fuelstation_ca.paa"],
-				["cop_spawn_3","Athira HQ","\a3\ui_f\data\map\GroupIcons\badge_rotate_0_gs.paa"],
-				["cop_spawn_5","Sofia HQ","\a3\ui_f\data\map\GroupIcons\badge_rotate_0_gs.paa"],
-				["cop_jail_spawn","Więzienie","\a3\ui_f\data\map\GroupIcons\badge_rotate_0_gs.paa"]
-			];
-		};
-	};
-	
-		
-	case civilian:
-	{
-		_return = [
-			["civ_spawn_1","Kavala","\a3\ui_f\data\map\MapControl\watertower_ca.paa"],
-			["civ_spawn_2","Pyrgos","\a3\ui_f\data\map\MapControl\watertower_ca.paa"],
-			["civ_spawn_3","Athira","\a3\ui_f\data\map\MapControl\watertower_ca.paa"],
-			["civ_spawn_4","Sofia","\a3\ui_f\data\map\MapControl\watertower_ca.paa"]
-		];
-		if(license_civ_donator1) then
-		{
-		_return = _return + [
-			["donator_spawn","Rebelka0","\a3\ui_f\data\map\MapControl\watertower_ca.paa"]
-			];
-		};
-		if(license_civ_donator2) then
-		{
-		_return = _return + [
-			["donator_spawn","Rebelka0","\a3\ui_f\data\map\MapControl\watertower_ca.paa"]
-			];
-		};
-		if(license_civ_donator3) then
-		{
-		_return = _return + [
-			["donator_spawn","Rebelka0","\a3\ui_f\data\map\MapControl\watertower_ca.paa"]
-			];
-		};
-	
-		if(count life_houses > 0) then {
-			{
-				_pos = call compile format["%1",_x select 0];
-				_house = nearestBuilding _pos;
-				_houseName = getText(configFile >> "CfgVehicles" >> (typeOf _house) >> "displayName");
-				
-				_return pushBack [format["house_%1",_house getVariable "uid"],_houseName,"\a3\ui_f\data\map\MapControl\lighthouse_ca.paa"];;
-			} foreach life_houses;
-		};	
-	};
-	
-	case independent: {
-		_return = [
-			["medic_spawn_1","Szpital Kavala","\a3\ui_f\data\map\MapControl\hospital_ca.paa"],
-			["medic_spawn_2","Szpital Athira","\a3\ui_f\data\map\MapControl\hospital_ca.paa"],
-			["medic_spawn_3","Szpital Pygros","\a3\ui_f\data\map\MapControl\hospital_ca.paa"]
-		];
-	};
-	
-	case east: {
-		_return = [
-			["ASF_spawn","Siedziba Ochrony","\a3\ui_f\data\map\MapControl\watertower_ca.paa"]
-		];
-	};
+};
+
+if(playerSide isEqualTo civilian) then {
+  if(count life_houses > 0) then {
+    {
+      _pos = call compile format["%1",_x select 0];
+      _house = nearestObject [_pos, "House"];
+      _houseName = getText(configFile >> "CfgVehicles" >> (typeOf _house) >> "displayName");
+
+      _return pushBack [format["house_%1",_house getVariable "uid"],_houseName,"\a3\ui_f\data\map\MapControl\lighthouse_ca.paa"];
+    } forEach life_houses;
+  };
 };
 
 _return;
